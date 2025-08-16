@@ -1,5 +1,5 @@
 import streamlit as st
-from  langchain.agents import create_csv_agent
+from langchain.agents import create_csv_agent
 from langchain_google_genai import GoogleGenerativeAI
 
 def main():
@@ -13,28 +13,34 @@ def main():
     csv_file= st.file_uploader('upload your csv file', type=['csv'])
     
     #Upload CSV file
-    if not csv_file:
+    if not csv_file or csv_file is None:
         st.warning("Please upload a CSV file to proceed.")
         return
     else:
         st.success("DataFrame loaded successfully!")
 
-    if csv_file is None:
-        st.error("No CSV file uploaded.")
-    else:
-        query= st.text_input("Enter your query: ", key='Question')   
+    # get query from user
+    query= st.text_input("Enter your query: ", key='Question')   
 
-        if not query:
-            return
-            st.write(f"You asked: {query}")
+    # Initialize the Google Generative AI model
+    model = GoogleGenerativeAI(model_name="models/gemini-2.5-flash-lite", tempreature=0)
 
-            
-        
-            # Here you would typically process the query against the CSV data
-            # For example, you could use pandas to read the CSV and answer the query
-            # df = pd.read_csv(csv_file)
-            # answer = process_query(df, query)
-            # st.write(answer)
+    # Create the CSV agent
+    agent_executor = create_csv_agent(
+        model=model,
+        csv_file=csv_file,
+        verbose=True
+    )
+
+    if not query or query.strip() == "":
+        st.warning("Please enter a query to proceed.")
+        return
+
+    
+
+
+
+
 
 if __name__ == '__main__':
     main()
