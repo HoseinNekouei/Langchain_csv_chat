@@ -1,44 +1,55 @@
 import streamlit as st
-from langchain.agents import create_csv_agent
+import pandas as pd
+import tempfile
+from dotenv import load_dotenv
+from langchain_experimental.agents import create_csv_agent
 from langchain_google_genai import GoogleGenerativeAI
 
 def main():
+    load_dotenv()
+
     st.set_page_config(
         page_title="Ask your CSV",
         page_icon=":chart_with_upwards_trend:",
         layout="centered",
     )   
-    st.title("Ask your CSV")
 
-    csv_file= st.file_uploader('upload your csv file', type=['csv'])
-    
     #Upload CSV file
+    csv_file= st.file_uploader('upload your csv file', type=['csv'])
     if not csv_file or csv_file is None:
-        st.warning("Please upload a CSV file to proceed.")
+        st.info("Please upload a CSV file to continue.")        
         return
+    
     else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as temp_file:
+            temp_file.write(csv_file.getbuffer())
+            temp_file_path = temp_file.name
+
         st.success("DataFrame loaded successfully!")
 
     # get query from user
-    query= st.text_input("Enter your query: ", key='Question')   
-
-    # Initialize the Google Generative AI model
-    model = GoogleGenerativeAI(model_name="models/gemini-2.5-flash-lite", tempreature=0)
-
-    # Create the CSV agent
-    agent_executor = create_csv_agent(
-        model=model,
-        csv_file=csv_file,
-        verbose=True
-    )
-
+    query= st.text_input("Enter your query: ")   
+    
     if not query or query.strip() == "":
         st.warning("Please enter a query to proceed.")
         return
 
-    
+    # Initialize the Google Generative AI model
+    model = GoogleGenerativeAI(model="models/gemini-2.5-flash-lite", temperature=0.0)
+
+    # Create the CSV agent
+    agent_executor = create_csv_agent(
+        llm=model,
+        path=temp_file_path,
+        verbose=True,
+        allow_dangerous_code=True
+        )
 
 
+    if query.strip():
+        # Run the agent with the user's query
+        response = agent_executor.run(input=query)
+        st.write("Answer:", response)
 
 
 
