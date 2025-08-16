@@ -33,7 +33,7 @@ def main():
             return
 
     # get query from user
-    query = st.text_input("Enter your query: ")
+    query = st.text_area("Enter your query: ")
     if not query or query.strip() == "":
         st.warning("Please enter a query to proceed.")
         return
